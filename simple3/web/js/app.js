@@ -19,12 +19,23 @@ app.controller('PersonsController', ['$scope', '$http', function ($scope, $http)
 
     $scope.addPerson = function (name) {
         $http.post('/api/person', {Name: name})
-            .success(function(data) {
+            .success(function () {
                 $scope.persons.push(name);
                 $scope.newName = "";
             })
-            .error(function(error) {
+            .error(function (error) {
                 $scope.status = 'Unable to add new person: ' + error.message;
             });
     };
+
+    $scope.deletePerson = function (index) {
+        $http.delete('/api/person/' + index)
+            .success(function () {
+                $scope.persons.splice(index, 1);
+            })
+            .error(function (error) {
+                $scope.status = 'Unable to delete person: ' + error.message;
+            });
+    };
+
 }]);

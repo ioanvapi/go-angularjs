@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="js/angular.min.js"></script>
+    <script src="js/app.js"></script>
+    <link rel='stylesheet' href="css/app.css">
+    <link rel='stylesheet' href="css/bootstrap.min.css">
+</head>
+<body>
+
+
+<div class="container" id="main" ng-controller="PersonsController">
+    <h1>Persons List</h1>
+
+    <input type="text" class="form-control" ng-model="newName"
+           placeholder="What's the new name?">
+    <input type="submit" value="Add" class="btn btn-primary add_button" ng-click="addPerson(newName)">
+
+    <ol class="list-group list_of_items">
+        <li class="list-group-item" ng-repeat="person in persons">
+            <div class="text_holder">
+                {{ person }}
+                <div class="btn-group pull-right">
+                    <button class="delete btn btn-warning" ng-click="deletePerson($index)">Delete</button>
+                    <button class="edit btn btn-success" ng-click="editPerson($index)">Edit</button>
+                </div>
+            </div>
+        </li>
+    </ol>
+
+</div>
+
+</body>
+</html>

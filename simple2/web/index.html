@@ -9,12 +9,19 @@
 <body>
 
 <div class="container" ng-controller="PersonsController">
+
+    Name:<input type="text" ng-model="newName"/>
+    <button ng-click="addPerson(newName)">Add</button>
+
     <h2>Persons</h2>
     <ul>
         <li ng-repeat="person in persons">
             {{ person }}
         </li>
     </ul>
+
+    <br/> Debug1: '{{ debug1 }}'
+    <br/> Debug2: '{{ debug2 }}'
 </div>
 
 </body>
