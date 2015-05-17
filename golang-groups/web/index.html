@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Go Meetups</title>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+    <script src="main.js"></script>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body ng-controller="GroupsCtrl">
+<div class="container">
+    <h1 class="rounded-box">Go Meetups</h1>
+    <h2>Groups</h2>
+
+    <table class="gray rounded-box">
+        <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Members</th>
+        </tr>
+        <tr ng-repeat="g in groups | orderBy:'members':true">
+            <td><a href="{{ g.url }}">{{ g.name}}</a></td>
+            <td>{{ g.city}}, {{ g.country }}</td>
+            <td>{{ g.members }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="errors">
+    <p ng-repeat="e in errors" class="rounded-box" ng-click="errors.splice($index, 1)">{{ e }}</p>
+</div>
+
+</body>
+</html>
