@@ -39,8 +39,6 @@ func main() {
 }
 
 func feedSomeData(input chan<- []byte) {
-	defer log.Println("Exit from run() goroutine.")
-
 	tick := time.NewTicker(5 * time.Second)
 
 	for {
