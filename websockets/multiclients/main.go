@@ -90,14 +90,14 @@ func (pool *WebSocketPool) run() chan<- []byte {
 			}
 
 			clients := pool.copyClients()
-			for _, ws:= range clients {
-				if err := ws.WriteMessage(websocket.TextMessage, msg); err != nil {
-					pool.deleteClient(ws)
-					ws.Close()
-					log.Printf("Error sending message to %v\n", ws.RemoteAddr())
+			for _, client := range clients {
+				if err := client.WriteMessage(websocket.TextMessage, msg); err != nil {
+					pool.deleteClient(client)
+					client.Close()
+					log.Printf("Error sending message to %v\n", client.RemoteAddr())
 					continue
 				}
-				log.Printf("Sent message to %v\n", ws.RemoteAddr())
+				log.Printf("Sent message to %v\n", client.RemoteAddr())
 			}
 		}
 	}()
