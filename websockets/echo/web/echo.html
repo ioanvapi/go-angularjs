@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html ng-app="chat">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Echo</title>
+    <link rel='stylesheet' href="bootstrap.min.css">
+</head>
+<body ng-controller="MainController">
+<div class="container">
+    <h2>Echo</h2>
+    <ul>
+        <li ng-repeat="m in messages">{{ m }}</li>
+    </ul>
+
+    <input type="text" ng-model="msg">
+    <button class="btn btn-primary" ng-click="send()">Send</button>
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.3/angular.min.js"></script>
+<script>
+    var app = angular.module('chat', []);
+    app.controller('MainController', ["$scope", function($scope) {
+        $scope.messages = [];
+
+        var conn = new WebSocket("ws://localhost:8080/ws");
+
+        conn.onclose = function (e) {
+            $scope.$apply(function() {
+               $scope.messages.push("DISCONNECTED");
+            });
+        };
+
+        conn.onopen = function(e) {
+            $scope.$apply(function() {
+                $scope.messages.push("CONNECTED");
+            });
+        };
+
+        conn.onmessage = function(e) {
+            $scope.$apply(function() {
+                $scope.messages.push(e.data);
+            });
+        };
+
+        $scope.send = function() {
+            conn.send($scope.msg);
+            $scope.msg = '';
+        }
+
+    }])
+</script>
+</body>
+</html>

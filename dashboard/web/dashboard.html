@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/angular.min.js"></script>
+    <script src="js/app.js"></script>
+</head>
+<body ng-controller="DashboardCtrl">
+
+<div class="container">
+    <h2>Events</h2>
+
+    <table class="table table-hover table-striped table-bordered">
+        <thead>
+        <tr>
+            <th>Host</th>
+            <th>Service</th>
+            <th>State</th>
+            <th>Time</th>
+            <th>Description</th>
+            <th>Tags</th>
+            <th>Metric</th>
+        </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="e in events">
+                <td>{{ e.host }}</td>
+                <td>{{ e.service }}</td>
+                <td>{{ e.state }}</td>
+                <td>{{ e.time }}</td>
+                <td>{{ e.description }}</td>
+                <td><span ng-repeat="t in e.tags">{{t}}{{$last ? '' : ', '}}</span></td>
+                <td>{{ e.metric }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+</body>
+</html>
