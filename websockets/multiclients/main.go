@@ -103,6 +103,12 @@ func (pool *WebSocketPool) run() chan<- []byte {
 	return pool.input
 }
 
+// it stops the input channel that in turn close() all the clients connections
+// ... then run() stops
+func (pool *WebSocketPool)stop() {
+	close(pool.input)
+}
+
 func (pool *WebSocketPool)closeClients() {
 	pool.RLock()
 	defer pool.RUnlock()
