@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html ng-app="client">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Client</title>
+    <link rel='stylesheet' href="bootstrap.min.css">
+</head>
+<body ng-controller="MainController">
+<div class="container">
+    <h2>Messages</h2>
+    <ul>
+        <li ng-repeat="m in messages">{{ m }}</li>
+    </ul>
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.3/angular.min.js"></script>
+<script>
+    var app = angular.module('client', []);
+    app.controller('MainController', ["$scope", function($scope) {
+        $scope.messages = [];
+
+        var conn = new WebSocket("ws://localhost:8080/ws");
+
+        conn.onmessage = function(e) {
+            $scope.$apply(function() {
+                $scope.messages = eval(e.data);
+            });
+        };
+
+        conn.onclose = function (e) {
+            $scope.$apply(function() {
+               $scope.messages.push("DISCONNECTED");
+            });
+        };
+
+        conn.onopen = function(e) {
+            $scope.$apply(function() {
+                $scope.messages.push("CONNECTED");
+            });
+        };
+    }])
+</script>
+</body>
+</html>
