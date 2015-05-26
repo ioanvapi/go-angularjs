@@ -1,8 +1,12 @@
 package main
-import "log"
+import (
+	"log"
+	"sync"
+)
 
 
 type hub struct {
+	sync.RWMutex
 	// registered connections
 	connections map[*Connection]bool
 
@@ -24,6 +28,7 @@ var h = &hub{
 	input: make(chan []byte),
 }
 
+
 func (h *hub) run() {
 	go func() {
 		defer log.Println("Exit from hub run()")
@@ -31,12 +36,11 @@ func (h *hub) run() {
 		for {
 			select {
 			case c := <-h.register:
-				h.connections[c] = true
 				log.Println("Registering connection to ", c.ws.RemoteAddr())
+				h.connections[c] = true
 			case c := <-h.unregister:
-				delete(h.connections, c)
-				close(c.send)
 				log.Println("Unregistering connection to ", c.ws.RemoteAddr())
+				h.removeConnection(c)
 			case m, ok := <-h.input:
 				if !ok {
 					h.unregisterAll()
@@ -46,9 +50,7 @@ func (h *hub) run() {
 					select {
 					case c.send <- m:
 					default:
-						close(c.send)
-						delete(h.connections, c)
-						log.Println("*** Remove connection to ", c.ws.RemoteAddr())
+						log.Println("Cannot write to", c.ws.RemoteAddr())
 					}
 				}
 			}
@@ -56,7 +58,31 @@ func (h *hub) run() {
 	}()
 }
 
+
+func (h *hub) Registered(c *Connection) bool {
+	h.RLock()
+	_, ok := h.connections[c]
+	h.RUnlock()
+	return ok
+}
+
+func (h *hub) removeConnection(c *Connection) {
+	h.Lock()
+	defer h.Unlock()
+
+	_, found := h.connections[c]
+	// try to avoid closing an already closed channel
+	if found {
+		delete(h.connections, c)
+		close(c.send)
+	}
+}
+
 func (h *hub) unregisterAll() {
+	log.Println("Unregister all connections.")
+	h.Lock()
+	defer h.Unlock()
+
 	for c, _ := range h.connections {
 		close(c.send)
 		delete(h.connections, c)

@@ -7,35 +7,79 @@
     <script src="js/angular.min.js"></script>
     <script src="js/app.js"></script>
 </head>
+
 <body ng-controller="DashboardCtrl">
 
 <div class="container">
-    <h2>Events</h2>
+
+    <div class="header">
+        <h1>Dashboard</h1>
+    </div>
+    <div>
+        <p>Connected at: {{ connectedTime }}</p>
+        <p>Disconnected at: {{ disconnectedTime }}</p>
+    </div>
+    <hr>
+    <h2>Active Events</h2>
 
     <table class="table table-hover table-striped table-bordered">
         <thead>
         <tr>
-            <th>Host</th>
-            <th>Service</th>
-            <th>State</th>
-            <th>Time</th>
-            <th>Description</th>
-            <th>Tags</th>
-            <th>Metric</th>
+            <th class="col-md-3">Host</th>
+            <th class="col-md-3">Service</th>
+            <th class="col-md-1">State</th>
+            <th class="col-md-4">Time</th>
+            <th class="col-md-3">Description</th>
+            <th class="col-md-3">Tags</th>
+            <th class="col-md-2">Metric</th>
+            <th class="col-md-2"></th>
         </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="e in events">
+            <tr ng-repeat="e in activeEvents | orderBy:['state', 'time']">
                 <td>{{ e.host }}</td>
                 <td>{{ e.service }}</td>
-                <td>{{ e.state }}</td>
-                <td>{{ e.time }}</td>
+                <td ng-style="e.state === 'critical' && {'background-color':'red','color':'white'}">{{ e.state }}</td>
+                <td>{{ e.timeDisplay }}</td>
                 <td>{{ e.description }}</td>
                 <td><span ng-repeat="t in e.tags">{{t}}{{$last ? '' : ', '}}</span></td>
                 <td>{{ e.metric }}</td>
+                <td><a ng-click="ack(e.host, e.service)">Ack</a></td>
             </tr>
         </tbody>
     </table>
+
+    <h2>Acknowledged Events</h2>
+
+    <table class="table table-hover table-striped table-bordered">
+        <thead>
+        <tr>
+            <th class="col-md-3">Host</th>
+            <th class="col-md-3">Service</th>
+            <th class="col-md-1">State</th>
+            <th class="col-md-4">Time</th>
+            <th class="col-md-3">Description</th>
+            <th class="col-md-3">Tags</th>
+            <th class="col-md-2">Metric</th>
+            <th class="col-md-2">Ack Message</th>
+            <th class="col-md-2">Ack User</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="e in ackEvents | orderBy:['state', 'time']">
+            <td>{{ e.host }}</td>
+            <td>{{ e.service }}</td>
+            <td ng-style="e.state === 'critical' && {'background-color':'red','color':'white'}">{{ e.state }}</td>
+            <td>{{ e.timeDisplay }}</td>
+            <td>{{ e.description }}</td>
+            <td><span ng-repeat="t in e.tags">{{t}}{{$last ? '' : ', '}}</span></td>
+            <td>{{ e.metric }}</td>
+            <td>{{ e.ackMessage }}</td>
+            <td>{{ e.ackUser }}</td>
+        </tr>
+        </tbody>
+    </table>
+
 
 </div>
 
