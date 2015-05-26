@@ -3,30 +3,8 @@ var app = angular.module('app', []);
 app.controller('DashboardCtrl', ['$scope', '$http', function ($scope, $http) {
     $scope.activeEvents = [];
     $scope.ackEvents = [];
-    $scope.dash = {};
+    $scope.lastRefresh = new Date().getTime();
 
-    // get events to populate Active Events table
-    $http.get('/api/events')
-        .success(function (data) {
-            if (data) {
-                $scope.activeEvents = formatTime(data.activeEvents);
-            }
-        })
-        .error(function (data) {
-            console.log(data)
-        });
-
-    // get events to populate Acknowledged Events table
-    $http.get('/api/ackevents')
-        .success(function (data) {
-            //console.log("Ack: " + data);
-            if (data) {
-                $scope.ackEvents = formatTime(data.ackEvents);
-            }
-        })
-        .error(function (data) {
-            console.log(data)
-        });
 
     var port = location.port;
     if (port != '') {
@@ -37,8 +15,8 @@ app.controller('DashboardCtrl', ['$scope', '$http', function ($scope, $http) {
     conn.onmessage = function (message) {
         $scope.$apply(function () {
             var d = JSON.parse(message.data);
-            $scope.activeEvents = formatTime(d.activeEvents);
-            $scope.ackEvents = formatTime(d.ackEvents);
+            $scope.activeEvents = d.activeEvents;
+            $scope.ackEvents = d.ackEvents;
         });
     };
 
@@ -62,19 +40,9 @@ app.controller('DashboardCtrl', ['$scope', '$http', function ($scope, $http) {
             if (conn.readyState == WebSocket.OPEN) {
                 conn.send('ping');
             }
-        }, 50 * 1000);
+        }, 30 * 1000); // when I increased time I got error 'WSARecv tcp [::1]:8080: i/o timeout'
     };
 
-    var formatTime = function (events) {
-        var data = [];
-        for (var i = 0; i < events.length; i++) {
-            var event = events[i];
-            var t = new Date(event.time * 1000);
-            event.timeDisplay = t.toDateString() + " " + t.toTimeString();
-            data.push(event);
-        }
-        return data;
-    };
 
     $scope.ack = function (host, service) {
         var body = JSON.stringify({
@@ -93,4 +61,39 @@ app.controller('DashboardCtrl', ['$scope', '$http', function ($scope, $http) {
             });
     };
 
+    // get events to populate Active Events table
+    var getActiveEvents = function () {
+        $http.get('/api/events')
+            .success(function (data) {
+                if (data) {
+                    $scope.activeEvents = data.activeEvents;
+                }
+            })
+            .error(function (data) {
+                console.log(data)
+            });
+    };
+
+    // get events to populate Acknowledged Events table
+    var getAckEvents = function () {
+        $http.get('/api/ackevents')
+            .success(function (data) {
+                //console.log("Ack: " + data);
+                if (data) {
+                    $scope.ackEvents = data.ackEvents;
+                }
+            })
+            .error(function (data) {
+                console.log(data)
+            });
+    };
+
+    $scope.refresh = function () {
+        $scope.lastRefresh = new Date().getTime();
+        getActiveEvents();
+        getAckEvents();
+    };
+
+    getActiveEvents();
+    getAckEvents();
 }]);

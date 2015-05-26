@@ -34,7 +34,7 @@ func NewConnection(w http.ResponseWriter, r *http.Request) (*Connection, error) 
 		// here comes messages that should be send on websocket
 		send: make(chan ([]byte)),
 		// heartbeat ping period
-		pingPeriod: 60 * time.Second,
+		pingPeriod: 40 * time.Second,
 	}, nil
 }
 
