@@ -1,6 +1,7 @@
 var app = angular.module('app', []);
 
 app.controller('DashboardCtrl', ['$scope', '$http', function ($scope, $http) {
+    $scope.loggedUser = "anonymous";
     $scope.activeEvents = [];
     $scope.ackEvents = [];
     $scope.lastRefresh = new Date().getTime();
