@@ -1,0 +1,85 @@
+<div>
+    <div class="row">
+        <div class="col-md-10">
+            <a href="" ng-click="refresh()"><i class="fa fa-refresh fa-fw"></i></a>
+            <span class="text-muted">Last manual refresh: {{ lastRefresh | date:'medium'}}</span>
+        </div>
+        <div class="col-md-2">
+            <ul class="nav fa-ul">
+                <li><i class="fa-li fa fa-spinner fa-spin"></i><span class="text-muted">&nbsp; Connected at: {{ connectedTime }}</span>
+                </li>
+                <li><i class="fa-li fa fa-spinner"></i><span class="text-muted">&nbsp; Disconnected at: {{ disconnectedTime }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <hr>
+
+    <h2 class="sub-header">Active Events</h2>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th class="col-md-2">Host</th>
+                <th class="col-md-3">Service</th>
+                <th class="col-md-1">State</th>
+                <th class="col-md-3">Time</th>
+                <th class="col-md-1">Description</th>
+                <th class="col-md-2">Tags</th>
+                <th class="col-md-2">Metric</th>
+                <th class="col-md-1"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="e in activeEvents | orderBy:['state', 'time']">
+                <td>{{ e.host }}</td>
+                <td>{{ e.service }}</td>
+                <td ng-style="e.state === 'critical' && {'background-color':'red','color':'white'}">{{ e.state
+                    }}
+                </td>
+                <td>{{ (e.time * 1000) | date:'EEE MMM dd yyyy HH:mm:ss \'GMT\' Z' }}</td>
+                <td>{{ e.description }}</td>
+                <td><span ng-repeat="t in e.tags">{{t}}{{$last ? '' : ', '}}</span></td>
+                <td>{{ e.metric }}</td>
+                <td><a ng-click="ack(e.host, e.service)" style="cursor: pointer">Ack</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="sub-header">Acknowledged Events</h2>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th class="col-md-2">Host</th>
+                <th class="col-md-2">Service</th>
+                <th class="col-md-1">State</th>
+                <th class="col-md-2">Time</th>
+                <th class="col-md-2">Description</th>
+                <th class="col-md-2">Tags</th>
+                <th class="col-md-1">Metric</th>
+                <th class="col-md-2">Ack Message</th>
+                <th class="col-md-1">Ack User</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="e in ackEvents | orderBy:['state', 'time']">
+                <td>{{ e.host }}</td>
+                <td>{{ e.service }}</td>
+                <td ng-style="e.state === 'critical' && {'background-color':'red','color':'white'}">{{ e.state
+                    }}
+                </td>
+                <td>{{ (e.time * 1000) | date:'EEE MMM dd yyyy HH:mm:ss \'GMT\' Z' }}</td>
+                <td>{{ e.description }}</td>
+                <td><span ng-repeat="t in e.tags">{{t}}{{$last ? '' : ', '}}</span></td>
+                <td>{{ e.metric }}</td>
+                <td>{{ e.ackMessage }}</td>
+                <td>{{ e.ackUser }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
