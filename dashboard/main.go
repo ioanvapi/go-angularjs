@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"time"
+	"bytes"
 )
 
 // in memory image of the dashboard events
@@ -82,18 +83,26 @@ func PostAckEventHandler(w http.ResponseWriter, r *http.Request) {
 // We update the events list and eventually push new data to dashboard
 func PostEventHandler(w http.ResponseWriter, r *http.Request) {
 	var event Event
-	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
 		// do not respond with http.Error() but with a message about error
 		w.Write(error2json(err))
-		log.Println("error decoding received event: ", err)
+		log.Println("error reading incomming event: ", err)
 		return
 	}
+
+	err = json.Unmarshal(buf.Bytes(), &event)
+	if err != nil {
+		// do not respond with http.Error() but with a message about error
+		w.Write(error2json(err))
+		log.Println("error decoding received event: ", buf.String())
+		return
+	}
+
 	updated := dashboardEvents.Update(event)
-	//	log.Printf("\n*****************    Size : %+v\n\n", len(list.data))
 	if updated {
 		h.input <- dashboardEvents.DataJSON()
-//		log.Printf("Update based on event:\n %+v\n", event)
-//		fmt.Println("Receive at: ", time.Now().Format("15:04:05"))
 	}
 }
 

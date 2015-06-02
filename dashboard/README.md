@@ -12,3 +12,40 @@
 5. Hub receives again the unregister for connection but find its already unregistered.
  
  
+## Integration with Riemann
+
+ In rieman.config.clj
+ 
+    (require '[synygy.riemann.post2dash :refer :all] :reload)
+ 
+    post-dash (post2dash "http://is-memmi.synygy.net:8080/api/event")
+ 
+    dash (where (not (maintenance-mode? event))
+                       (where (or (and (any? :org ["Production" "SalesSyn" "PSSyn" "SalesOpty" "SalesSyn"] event)
+                                       (not (tagged-any? ["devops" "exception"] event)))
+                                  (any? :event ["webmonitor-executionstats"] event))
+                              (async-queue! :dash {:queue-size 1000}
+                                            (dashboard "/var/log/riemann/dashboard.txt")
+                                            (ddashboard (:datomic-uri config))
+                                            (changed-state {:init "ok"}
+                                                   post-dash)
+                                            )))
+It will post events to this dashboard by 'change state' which allows event to pass it if it has its current state changed as before. If there is no before state saved in changed-state 
+then 'ok' is considered previous state.
+                                            
+                                            
+There must be a file post2dash.clj in /opt/optymyze/riemann/lib/synygy/riemann/post2dash.clj with content:
+                                            
+    (ns synygy.riemann.post2dash
+      (:require [clj-http.client :as client]
+            [cheshire.core :as json]
+            [clojure.tools.logging :refer [info warn]]))
+        
+    (defn post2dash [url]
+       (info "****  start post2dash for " url)
+       (fn [event]
+           (let [ data (into {} (remove (comp nil? second) event))
+                  data-json (json/generate-string data)]
+               ;(info data-json)
+               (client/post url {:body data-json :content-type :json}))))
+                                                          
