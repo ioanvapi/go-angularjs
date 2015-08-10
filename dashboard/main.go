@@ -6,6 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	"time"
 	"bytes"
+	"os"
+	"gitlab.optymyze.net/tools/websocket-hub"
 )
 
 // in memory image of the dashboard events
@@ -13,7 +15,15 @@ var dashboardEvents *DashboardEvents
 
 
 func main() {
-	dashboardEvents = NewDashboardEvents()
+	db, err := NewBoltStore("./dashboard.db")
+	if err != nil {
+		log.Fatalln("Cannot create a Bolt store.")
+		os.Exit(1)
+	}
+
+	if dashboardEvents, err = NewDashboardEvents(db); err != nil {
+		log.Println("Error when running NewDashboardEvents(): ", err)
+	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/ws", WsEventsHandler)
@@ -24,25 +34,21 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./web/")))
 	http.Handle("/", r)
 
-	h.run()
-
 	log.Println("Running ...")
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
 	log.Println(err.Error())
 }
+
 
 // WebSocket connection handler. It creates a connection to the WebSocket client
 // and starts a goroutine that listen to the connection channel and pushes
 // fresh data to the websocket client.
 func WsEventsHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := NewConnection(w, r)
+	err := wshub.StartConnection(w, r)
 	if err != nil {
-		http.Error(w, "Not a websocket handshake", 400)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	h.register <- conn
-	go conn.StartWriting()
-	conn.ReadPings()
 }
 
 // It responds to a GET REST request when we are asked for all events
@@ -76,7 +82,7 @@ func PostAckEventHandler(w http.ResponseWriter, r *http.Request) {
 	ackEvent.AckTime = time.Now().Unix()
 	log.Println("Received ACK:", ackEvent)
 	dashboardEvents.MoveActive2AckEvents(ackEvent)
-	h.input <- dashboardEvents.DataJSON()
+	wshub.Hub.Input <- dashboardEvents.DataJSON()
 }
 
 // It responds to a POST request, when we get a new event.
@@ -102,7 +108,7 @@ func PostEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	updated := dashboardEvents.Update(event)
 	if updated {
-		h.input <- dashboardEvents.DataJSON()
+		wshub.Hub.Input <- dashboardEvents.DataJSON()
 	}
 }
 

@@ -21,6 +21,15 @@ type Event struct {
 }
 
 
+type EventsStore interface {
+	AddActiveEvent(event Event) error
+	AddAckEvent(event Event) error
+	AllActiveEvents() (map[HostService]Event, error)
+	AllAckEvents() (map[HostService]Event, error)
+	DeleteActiveEvent(event Event) error
+	DeleteAckEvent(event Event) error
+}
+
 type HostService struct {
 	Host    string    `json:"host"`
 	Service string    `json:"service"`
@@ -34,6 +43,7 @@ type EventsList struct {
 type DashboardEvents struct {
 	ActiveEvents EventsList
 	AckEvents EventsList
+	db EventsStore
 }
 
 func (e *Event) isOK() bool {
@@ -57,15 +67,15 @@ func (el *EventsList) copy() []Event {
 	return newList
 }
 
-func NewDashboardEvents() *DashboardEvents {
-	return &DashboardEvents{
-		ActiveEvents: EventsList{
-			data: make(map[HostService]Event, 0),
-		},
-		AckEvents: EventsList{
-			data: make(map[HostService]Event, 0),
-		},
+func NewDashboardEvents(db EventsStore) (*DashboardEvents, error) {
+	dashboardEvents := &DashboardEvents{db: db}
+
+	// load events from data store for initial state
+	if err := dashboardEvents.init(); err != nil {
+		return nil, err
 	}
+
+	return dashboardEvents, nil
 }
 
 func (dash *DashboardEvents) ActiveEventsDataJSON() []byte {
@@ -166,4 +176,24 @@ func (dash *DashboardEvents) Update(newEvent Event) bool {
 	activeEvents.Unlock()
 	ackEvents.Unlock()
 	return updated
+}
+
+func (dash *DashboardEvents) init() error {
+	// load active events from data store
+	activeEvents, err := dash.db.AllActiveEvents()
+	log.Printf("Loading %d active events from data store.\n", len(activeEvents))
+	if err != nil {
+		return err
+	}
+	dash.ActiveEvents = EventsList{data: activeEvents}
+
+	// load ack events from data store
+	ackEvents, err := dash.db.AllAckEvents()
+	log.Printf("Loading %d ack events from data store.\n", len(activeEvents))
+	if err != nil {
+		return err
+	}
+	dash.AckEvents = EventsList{data: ackEvents}
+
+	return nil
 }

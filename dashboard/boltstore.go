@@ -5,29 +5,29 @@ import (
 	"encoding/json"
 )
 
-
 var (
 	dbActiveEvents = []byte("active-events")
 	dbAckEvents = []byte("ack-events")
 	dbHistoryEvents = []byte("history-events")
 )
 
-type EventsStore struct {
+type BoltStore struct {
 	conn *bolt.DB
 	path string
 }
 
 
-func NewEventsStore(path string) (*EventsStore, error) {
+func NewBoltStore(path string) (*BoltStore, error) {
 	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
-	store := &EventsStore{
+	store := &BoltStore{
 		conn: db,
 		path: path,
 	}
 
+	// create those 3 buckets if they don't exist
 	if err = store.init(); err != nil {
 		store.Close()
 		return nil, err
@@ -36,11 +36,11 @@ func NewEventsStore(path string) (*EventsStore, error) {
 	return store, nil
 }
 
-func (db *EventsStore) Close() {
+func (db *BoltStore) Close() {
 	db.conn.Close()
 }
 
-func (db *EventsStore) init() error {
+func (db *BoltStore) init() error {
 	err := db.conn.Update(func (tx *bolt.Tx) error {
 		if _, err := tx.CreateBucketIfNotExists(dbActiveEvents); err != nil {
 			return err
@@ -57,32 +57,32 @@ func (db *EventsStore) init() error {
 }
 
 
-func (db *EventsStore) AddActiveEvent(event Event) error {
+func (db *BoltStore) AddActiveEvent(event Event) error {
 	return db.addEvent(event, dbActiveEvents)
 }
 
-func (db *EventsStore) AddAckEvent(event Event) error {
+func (db *BoltStore) AddAckEvent(event Event) error {
 	return db.addEvent(event, dbAckEvents)
 }
 
-func (db *EventsStore) AllActiveEvents() (map[HostService]Event, error) {
+func (db *BoltStore) AllActiveEvents() (map[HostService]Event, error) {
 	return db.allEvents(dbActiveEvents)
 }
 
-func (db *EventsStore) AllAckEvents() (map[HostService]Event, error) {
+func (db *BoltStore) AllAckEvents() (map[HostService]Event, error) {
 	return db.allEvents(dbAckEvents)
 }
 
-func (db *EventsStore) DeleteActiveEvent(event Event) error {
+func (db *BoltStore) DeleteActiveEvent(event Event) error {
 	return db.deleteEvent(event, dbActiveEvents)
 }
 
-func (db *EventsStore) DeleteAckEvent(event Event) error {
+func (db *BoltStore) DeleteAckEvent(event Event) error {
 	return db.deleteEvent(event, dbAckEvents)
 }
 
 
-func (db *EventsStore) addEvent(event Event, bucketName []byte) error {
+func (db *BoltStore) addEvent(event Event, bucketName []byte) error {
 	err := db.conn.Update(func (tx *bolt.Tx) error {
 		eventsBucket := tx.Bucket(bucketName)
 
@@ -99,14 +99,14 @@ func (db *EventsStore) addEvent(event Event, bucketName []byte) error {
 	return err
 }
 
-func (db *EventsStore) deleteEvent(event Event, bucketName []byte) error {
+func (db *BoltStore) deleteEvent(event Event, bucketName []byte) error {
 	err := db.conn.Update(func (tx *bolt.Tx) error {
 		return tx.Bucket(bucketName).Delete(dbKey(event.HostService))
 	})
 	return err
 }
 
-func (db *EventsStore) allEvents(bucketName []byte) (map[HostService]Event, error) {
+func (db *BoltStore) allEvents(bucketName []byte) (map[HostService]Event, error) {
 	events := make(map[HostService]Event)
 	err := db.conn.View(func (tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)

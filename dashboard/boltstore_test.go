@@ -14,7 +14,7 @@ import (
 
 func TestNewStoreCreated(t *testing.T) {
 	fileName := "t1.db"
-	db, err := NewEventsStore(fileName)
+	db, err := NewBoltStore(fileName)
 	if err != nil {
 		t.Fatalf("error creating NewEventsStore() to '%s'", fileName)
 	}
@@ -44,7 +44,7 @@ func TestNewStoreCreated(t *testing.T) {
 
 func TestWhenAddActiveEvent_ThenItIsStored(t *testing.T) {
 	fileName := "t2.db"
-	db, err := NewEventsStore(fileName)
+	db, err := NewBoltStore(fileName)
 	if err != nil {
 		t.Fatalf("error creating NewEventsStore() to '%s'", fileName)
 	}
@@ -77,7 +77,7 @@ func TestWhenAddActiveEvent_ThenItIsStored(t *testing.T) {
 
 func TestWhenAddSomeActiveEvents_ThenGetAllActiveEvents(t *testing.T) {
 	fileName := "t3.db"
-	db, err := NewEventsStore(fileName)
+	db, err := NewBoltStore(fileName)
 	if err != nil {
 		t.Fatalf("error creating NewEventsStore() to '%s'", fileName)
 	}
@@ -124,7 +124,7 @@ func TestWhenAddSomeActiveEvents_ThenGetAllActiveEvents(t *testing.T) {
 
 func TestWhenDeleteAnActiveEvent_ThenItIsNoLongerInStore(t *testing.T) {
 	fileName := "t4.db"
-	db, err := NewEventsStore(fileName)
+	db, err := NewBoltStore(fileName)
 	if err != nil {
 		t.Fatalf("error creating NewEventsStore() to '%s'", fileName)
 	}
@@ -182,7 +182,7 @@ func TestWhenDeleteAnActiveEvent_ThenItIsNoLongerInStore(t *testing.T) {
 	}
 }
 
-func addEventToStore(db *EventsStore, event Event, bucketName []byte) {
+func addEventToStore(db *BoltStore, event Event, bucketName []byte) {
 	err := db.conn.Update(func (tx *bolt.Tx) error {
 		bucket := tx.Bucket(bucketName)
 		dbValue, err := dbValue(event)
@@ -198,7 +198,7 @@ func addEventToStore(db *EventsStore, event Event, bucketName []byte) {
 }
 
 
-func getEventFromStore(db *EventsStore, hs HostService, bucketName []byte) *Event {
+func getEventFromStore(db *BoltStore, hs HostService, bucketName []byte) *Event {
 	var event Event
 	err := db.conn.View(func (tx *bolt.Tx) error {
 		data := tx.Bucket(bucketName).Get(dbKey(hs))

@@ -49,3 +49,32 @@ There must be a file post2dash.clj in /opt/optymyze/riemann/lib/synygy/riemann/p
                ;(info data-json)
                (client/post url {:body data-json :content-type :json}))))
                                                           
+## Development
+
+In order to get frequently events to this application from a real Riemann server I use some mock events.
+I added some code in riemann.config.clj that transforms ordinary events into alerts by adding status of type 'failure', 'warning', 'critical' or 'ok'.
+  
+    (require '[synygy.riemann.post2dash :refer :all] :reload)
+  
+    (where (service #"df-var-log/percent_bytes-free")
+          (post2dash "http://is-memmi.synygy.net:8080/api/event"))
+          
+The script I used to send data is:
+       
+       (ns synygy.riemann.post2dash
+         (:require [clj-http.client :as client]
+               [cheshire.core :as json]
+               [clojure.tools.logging :refer [info warn]]))
+       
+       (def states
+          ["ok" "critical" "warning" "failure"])
+       
+       (defn post2dash [url]
+          (info "****  start post2dash for " url)
+          (fn [event]
+              (let [ data (into {} (remove (comp nil? second) event))
+                     states (shuffle states)
+                     data (assoc data :state (first states))
+                     data-json (json/generate-string data)]
+                  (client/post url {:body data-json :content-type :json}))))
+                  
