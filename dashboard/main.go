@@ -7,7 +7,7 @@ import (
 	"time"
 	"bytes"
 	"os"
-	"gitlab.optymyze.net/tools/websocket-hub"
+	"gitlab.ceva.net/tools/websocket-hub"
 )
 
 // in memory image of the dashboard events
