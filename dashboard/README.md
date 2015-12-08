@@ -16,9 +16,9 @@
 
  In rieman.config.clj
  
-    (require '[synygy.riemann.post2dash :refer :all] :reload)
+    (require '[synergy.riemann.post2dash :refer :all] :reload)
  
-    post-dash (post2dash "http://is-memmi.synygy.net:8080/api/event")
+    post-dash (post2dash "http://is-memmi.synergy.net:8080/api/event")
  
     dash (where (not (maintenance-mode? event))
                        (where (or (and (any? :org ["Production" "SalesSyn" "PSSyn" "SalesOpty" "SalesSyn"] event)
@@ -34,9 +34,9 @@ It will post events to this dashboard by 'change state' which allows event to pa
 then 'ok' is considered previous state.
                                             
                                             
-There must be a file post2dash.clj in /opt/optymyze/riemann/lib/synygy/riemann/post2dash.clj with content:
+There must be a file post2dash.clj in /opt/optymyze/riemann/lib/synergy/riemann/post2dash.clj with content:
                                             
-    (ns synygy.riemann.post2dash
+    (ns synergy.riemann.post2dash
       (:require [clj-http.client :as client]
             [cheshire.core :as json]
             [clojure.tools.logging :refer [info warn]]))
@@ -54,14 +54,14 @@ There must be a file post2dash.clj in /opt/optymyze/riemann/lib/synygy/riemann/p
 In order to get frequently events to this application from a real Riemann server I use some mock events.
 I added some code in riemann.config.clj that transforms ordinary events into alerts by adding status of type 'failure', 'warning', 'critical' or 'ok'.
   
-    (require '[synygy.riemann.post2dash :refer :all] :reload)
+    (require '[synergy.riemann.post2dash :refer :all] :reload)
   
     (where (service #"df-var-log/percent_bytes-free")
-          (post2dash "http://is-memmi.synygy.net:8080/api/event"))
+          (post2dash "http://is-memmi.synergy.net:8080/api/event"))
           
 The script I used to send data is:
        
-       (ns synygy.riemann.post2dash
+       (ns synergy.riemann.post2dash
          (:require [clj-http.client :as client]
                [cheshire.core :as json]
                [clojure.tools.logging :refer [info warn]]))
